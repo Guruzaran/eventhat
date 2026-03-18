@@ -24,7 +24,7 @@ load_dotenv()
 
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-LLM_MODEL = "gemini-1.5-flash"
+LLM_MODEL = "models/gemini-2.5-flash"
 
 
 

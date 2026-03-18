@@ -60,15 +60,47 @@ async def _get_current_user(request: Request, pool: asyncpg.Pool) -> dict:
 
 
 def _confirmation_card(cmd: ParsedCommand) -> dict:
-    """Build the data for the confirmation UI card."""
+    """Build human-readable confirmation card data."""
     tier = gate.classify(cmd)
-    details = [f"Command: `{cmd.raw_cli}`"]
 
+    # Human-readable labels for each flag
+    label_map = {
+        "title": "Event name",
+        "date": "Date",
+        "slots": "Slots",
+        "location": "Location",
+        "price": "Price",
+        "privacy": "Privacy",
+        "status": "New status",
+        "description": "Description",
+        "event_id": "Event ID",
+        "slot": "Slot",
+        "signup_id": "Signup ID",
+        "type": "Type",
+        "message": "Message",
+    }
+
+    details = []
     for flag, value in cmd.args.items():
-        details.append(f"--{flag}: {value}")
+        label = label_map.get(flag, flag.replace("_", " ").title())
+        if flag == "slots" and hasattr(value, "count"):
+            value = f"{value.count} shift(s) × {value.capacity} people"
+        elif flag == "price":
+            value = f"${value / 100:.2f}"
+        details.append({"label": label, "value": str(value)})
+
+    action_titles = {
+        "event:create": "Create Event",
+        "event:update": "Update Event",
+        "event:clone": "Clone Event",
+        "signup:confirm": "Confirm Signup",
+        "signup:cancel": "Cancel Signup",
+        "payment:refund": "Issue Refund",
+        "notify:send": "Send Notification",
+    }
 
     return {
-        "title": f"{'⚠️ Destructive action' if tier == ConfirmationTier.DESTRUCTIVE else 'Confirm action'}",
+        "title": action_titles.get(cmd.key, cmd.key.replace(":", " ").title()),
         "command": cmd.key,
         "details": details,
         "warning": "This action is hard to undo." if tier == ConfirmationTier.DESTRUCTIVE else None,
@@ -231,7 +263,11 @@ async def confirm(
 
     # Reconstruct ParsedCommand from stored dict
     cmd_data = stored["parsed_command"]
-    parsed = ParsedCommand(**cmd_data)
+    # Re-parse from raw_cli — avoids SlotConfig deserialization issues
+    from agent.parser import parse as reparse
+    parsed = reparse(cmd_data["raw_cli"], role=user["role"])
+    if hasattr(parsed, "error_code"):
+        return {"type": "error", "message": f"Could not replay command: {parsed.message}"}
     session_id = UUID(stored["session_id"])
 
     tx_id = await session_manager.increment_tx_id(session_id, redis)

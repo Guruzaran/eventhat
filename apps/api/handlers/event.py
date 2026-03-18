@@ -2,10 +2,20 @@
 Event handlers — all run inside an asyncpg transaction passed from the executor.
 Never open new connections or start new transactions here.
 """
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 import asyncpg
+
+
+def _parse_date(value: str | None) -> datetime | None:
+    """Convert ISO-8601 date string to datetime for asyncpg TIMESTAMPTZ columns."""
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value
+    return datetime.fromisoformat(value)
 
 
 async def create(
@@ -31,7 +41,7 @@ async def create(
         args["title"],
         args.get("description"),
         event_type,
-        args.get("date"),        # ISO-8601 string, Postgres casts it
+        _parse_date(args.get("date")),
         args.get("location"),
         args.get("privacy", "public"),
     )
@@ -74,7 +84,7 @@ async def update(
     updatable = {
         "title": args.get("title"),
         "description": args.get("description"),
-        "starts_at": args.get("date"),
+        "starts_at": _parse_date(args.get("date")),
         "location": args.get("location"),
         "privacy": args.get("privacy"),
         "status": args.get("status"),

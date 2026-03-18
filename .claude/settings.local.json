@@ -6,7 +6,10 @@
       "Bash(conda run:*)",
       "Bash(mkdir:*)",
       "Bash(git init:*)",
-      "Bash(gh repo:*)"
+      "Bash(gh repo:*)",
+      "WebSearch",
+      "Bash(python -c \":*)",
+      "Bash(python:*)"
     ]
   }
 }

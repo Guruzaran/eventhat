@@ -1,6 +1,7 @@
 """
 LAYER 2 — Vector Memory
-Gemini text-embedding-004 → pgvector semantic search + semantic cache.
+Gemini gemini-embedding-001 → pgvector semantic search + semantic cache.
+Embedding dimension: 3072.
 """
 import os
 from uuid import UUID
@@ -13,7 +14,7 @@ load_dotenv()
 
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-EMBEDDING_MODEL = os.environ.get("GEMINI_EMBEDDING_MODEL", "models/text-embedding-004")
+EMBEDDING_MODEL = os.environ.get("GEMINI_EMBEDDING_MODEL", "models/gemini-embedding-001")
 SIMILARITY_THRESHOLD_EVENTS = 0.5
 SIMILARITY_THRESHOLD_CACHE  = 0.90
 

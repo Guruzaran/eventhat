@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS events (
   location        TEXT,
   privacy         TEXT CHECK(privacy IN ('public','private')) DEFAULT 'public',
   recurrence_rule JSONB,
-  embedding       vector(768),
+  embedding       vector(3072),
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS semantic_cache (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id     UUID REFERENCES organizations(id),
   query_text TEXT NOT NULL,
-  embedding  vector(768) NOT NULL,
+  embedding  vector(3072) NOT NULL,
   cli_result TEXT NOT NULL,
   hit_count  INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -123,8 +123,8 @@ CREATE INDEX IF NOT EXISTS idx_signups_event ON signups(event_id);
 CREATE INDEX IF NOT EXISTS idx_signups_user ON signups(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_caller ON audit_log(caller_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_ai_sessions_user ON ai_sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_events_embedding ON events USING hnsw (embedding vector_cosine_ops);
-CREATE INDEX IF NOT EXISTS idx_semantic_cache_embedding ON semantic_cache USING hnsw (embedding vector_cosine_ops);
+-- HNSW index skipped: pgvector HNSW max is 2000 dims, gemini-embedding-001 = 3072 dims
+-- Exact cosine search is used instead (fine for dev/small datasets)
 """
 
 
